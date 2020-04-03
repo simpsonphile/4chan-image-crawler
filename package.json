@@ -1,0 +1,17 @@
+{
+  "name": "4chan-crawler",
+  "version": "1.0.0",
+  "description": "advanced 4chan image search engine.",
+  "author": "Dawid Mazewski",
+  "private": true,
+  "scripts": {
+    "dev": "nuxt",
+    "build": "nuxt build",
+    "start": "nuxt start",
+    "generate": "nuxt generate"
+  },
+  "dependencies": {
+    "nuxt": "^2.0.0"
+  },
+  "devDependencies": {}
+}
