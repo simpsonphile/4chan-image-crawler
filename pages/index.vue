@@ -1,10 +1,17 @@
 <template>
   <div class="container">
-    <template v-if="boardDirs.length">
-      {{ boardDirs }}
-    </template>
+    <button @click="updateBoardImages(boards[36])">show mlp images</button>
 
-    <button @click="fetchBoards">get Boards</button>
+    {{ boards[36] }}
+
+    <div v-if="boards[36]" style="display: flex; flex-wrap: wrap;">
+      <img
+        v-for="(image, index) in boardImages(36)"
+        :key="'b2-' + index"
+        :src="image"
+        width="200"
+      />
+    </div>
   </div>
 </template>
 
@@ -14,13 +21,18 @@ import { mapGetters, mapActions } from 'vuex'
 export default {
   computed: {
     ...mapGetters({
-      boardDirs: 'getBoardDirs'
+      boards: 'getBoards',
+      boardImages: 'getBoardImages'
     })
   },
   methods: {
     ...mapActions({
-      fetchBoards: 'fetchBoards'
+      fetchBoards: 'fetchBoards',
+      updateBoardImages: 'updateBoardImages'
     })
+  },
+  mounted () {
+    this.fetchBoards()
   }
 }
 </script>
