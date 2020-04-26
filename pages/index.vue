@@ -1,8 +1,10 @@
 <template>
   <div class="container">
-    <button @click="updateBoardImages(boards[36])">show mlp images</button>
+    <the-boards-list>
 
-    {{ boards[36] }}
+    </the-boards-list>
+
+    {{ boards }}
 
     <div v-if="boards[36]" style="display: flex; flex-wrap: wrap;">
       <img
@@ -16,7 +18,9 @@
 </template>
 
 <script>
-import { mapGetters, mapActions } from 'vuex'
+import { mapGetters } from 'vuex'
+
+import TheBoardsList from '~/components/TheBoardsList'
 
 export default {
   computed: {
@@ -25,14 +29,8 @@ export default {
       boardImages: 'getBoardImages'
     })
   },
-  methods: {
-    ...mapActions({
-      fetchBoards: 'fetchBoards',
-      updateBoardImages: 'updateBoardImages'
-    })
-  },
-  mounted () {
-    this.fetchBoards()
+  components: {
+    TheBoardsList
   }
 }
 </script>
