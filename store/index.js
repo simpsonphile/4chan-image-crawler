@@ -1,38 +1,28 @@
 export const state = () => ({
-  prefix: 'https://cors-anywhere.herokuapp.com/',
-  apiUrl: 'https://a.4cdn.org/',
-  boards: []
+  boards: [],
+  boardsIndexMap: undefined
 })
 
 export const getters = {
-  getBoardsApiUrl: state => {
-    return state.prefix + state.apiUrl + '/boards.json'
+  getBoardsApiUrl: () => {
+    return '/boards.json'
   },
-
-  getThreadsByBoardApiUrl: state => boardName => {
-    return `${state.prefix}${state.apiUrl}${boardName}/threads.json`
+  getThreadsByBoardApiUrl: () => boardID => {
+    return `${boardID}/threads.json`
   },
-
-  getPostsByThreadApiUrl: state => (boardName, threadID) => {
-    return `${state.prefix}${state.apiUrl}${boardName}/thread/${threadID}.json`
+  getPostsByThreadApiUrl: () => (boardID, threadID) => {
+    return `${boardID}/thread/${threadID}.json`
   },
-
   getBoards: state => {
     return state.boards
   },
-
-  getBoardImages: state => boardID => {
-    return state.boards[boardID].imagesToShow
+  getBoardImgBufLength: state => id => {
+    const index = state.boardsIndexMap.get(id)
+    return state.boards[index].img_buf.length
   },
-
-  getUsedThreads: state => boardID => {
-    let index
-    state.boards.forEach((board, i) => {
-      if (board.id === boardID) {
-        index = i
-      }
-    })
-    return state.boards[index].usedThreads
+  getThreadTimestamp: state => (boardID, threadID) => {
+    const index = state.boardsIndexMap.get(boardID)
+    return state.boards[index].crawled_threads.get(threadID) || 0
   }
 }
 
@@ -40,148 +30,121 @@ export const mutations = {
   SET_BOARDS_LIST (state, boards) {
     state.boards = boards
   },
-
-  SET_BOARDS_TIMESTAMP(state, options) {
-    state.boards.forEach(board => {
-      if (board.id === options.id) {
-        board.timestamp_before = board.timestamp
-        board.timestamp = options.timestamp
-      }
-    })
+  SET_BOARDS_INDEX_MAP (state, boardsIndexMap) {
+    state.boardsIndexMap = boardsIndexMap
   },
-
-  ADD_USED_THREADS(state, options) {
-    state.boards.forEach(board => {
-      if (board.id === options.id) {
-        board.usedThreads.push(...options.threadIDs)
-      }
-    })
+  UPDATE_IMAGES (state, options) {
+    const index = state.boardsIndexMap.get(options.id)
+    state.boards[index].img_buf.push(...options.images)
   },
+  MOVE_IMAGES_FROM_BUFFOR (state, id) {
+    const index = state.boardsIndexMap.get(id)
 
-  ADD_IMAGES_BOARD(state, options) {
-    state.boards.forEach(board => {
-      if (board.id === options.id) {
-        board.images = [...options.images,...board.images]
-        board.imagesToShow.unshift(...board.images.slice(0, 30))
-        board.images = board.images.slice(30)
-      }
-    })
+    state.boards[index].img.push(...state.boards[index].img_buf.slice(0, 30))
+    state.boards[index].img_buf = state.boards[index].img_buf.slice(30)
+    console.log(state.boards[index].img, state.boards[index].img_buf)
+  },
+  SET_THREAD_TIMESTAMP (state, options) {
+    const index = state.boardsIndexMap.get(options.boardID)
+    state.boards[index].crawled_threads.set(options.threadID, options.timestamp)
   }
 }
 
 export const actions = {
   async fetchBoards({ commit, getters }) {
       const url = getters.getBoardsApiUrl
-      const boards = await this.$axios.$get(url)
-      const newBoards = boards.boards.map(board => {
+      const result = await this.$axios.$get(url)
+      const boards = result.boards.map(board => {
         return {
           id: board.board,
           name: board.title,
-          timestamp_before: 0,
-          timestamp: 0,
-          images: [],
-          imagesToShow: [],
-          usedThreads: []
+          img_buf: [],
+          img: [],
+          crawled_threads: new Map()
         }
       })
 
-      commit('SET_BOARDS_LIST', newBoards)
+      const boardsIndexMap = new Map(boards.map((board, index) => [board.id, index]))
+
+      commit('SET_BOARDS_LIST', boards)
+      commit('SET_BOARDS_INDEX_MAP', boardsIndexMap)
   },
 
-  async updateBoardImages({ dispatch, commit }, board) {
-    let threadIDs = await dispatch('fetchThreadsFromBoard', {
-      boardID: board.id,
-      timestamp: board.timestamp
-    })
+  async fetchImagesFromBoard({ commit, dispatch, getters }, boardID) {
+    const bufforLength = getters.getBoardImgBufLength(boardID)
+    if (bufforLength < 30) { // fetch new ones
+      let images = []
+      let threads = await dispatch('fetchThreads', boardID)
+      threads = threads.sort((a, b) => a.last_modified - b.last_modified)
+      const threadsLength = threads.length
 
-    const threadIDsLength = threadIDs.length
-    const images = []
+      for (let i = 0; i < threadsLength; i++) {
+        const thread = threads[i]
+        const threadID = thread.no
+        const prevTimestamp = getters.getThreadTimestamp(boardID, threadID)
+        const currentTimestamp = thread.last_modified
 
-    console.log(board.timestamp)
+        if (prevTimestamp >= currentTimestamp) continue
 
-    for (let i = 0; i < threadIDsLength; i++) {
-      console.log(i)
-      await new Promise(r => setTimeout(r, 1000))
+        // wait 1sec to not break 4chan rule about interval time before next request
+        await new Promise(r => setTimeout(r, 1000))
 
-      const imagesFromThread = await dispatch('fetchImagesFromThread', {
-        boardID: board.id,
-        threadID: threadIDs[i],
-        timestamp: board.timestamp_before
+        const imagesFromThread = await dispatch('fetchImagesFromThread', {
+          boardID: boardID,
+          threadID: threadID,
+          timestamp: prevTimestamp
+        })
+
+        images.push(...imagesFromThread)
+        console.log(images)
+
+        commit('SET_THREAD_TIMESTAMP', {
+          boardID: boardID,
+          threadID: threadID,
+          timestamp: currentTimestamp
+        })
+
+        if (images.length >= 30) break
+      }
+
+      commit('UPDATE_IMAGES', {
+        id: boardID,
+        images: images
       })
-      images.push(...imagesFromThread)
     }
 
-    console.log('xd',images)
-
-    commit('ADD_IMAGES_BOARD', {
-      id: board.id,
-      images: images
-    })
+    commit('MOVE_IMAGES_FROM_BUFFOR', boardID)
   },
 
-  async fetchThreadsFromBoard({ getters, commit }, options) {
-    const url = getters.getThreadsByBoardApiUrl(options.boardID)
-    const threadsObj = await this.$axios.$get(url)
-    let threads = []
+  async fetchThreads({ getters }, boardID) {
+    const url = getters.getThreadsByBoardApiUrl(boardID)
+    const result = await this.$axios.$get(url)
 
-    // get all threads that are newer then timestamp
-    threadsObj.forEach(page => {
-      page.threads.forEach(thread => {
-        if (thread.last_modified > options.timestamp) {
-          threads.push({
-            id: thread.no,
-            last_mod: thread.last_modified
-          })
-        }
-      })
-    })
+    const threads = result.flatMap(page => page.threads)
 
-    console.log(threads)
-
-    //filter out searched threads
-    console.log(options.boardID)
-    const usedThreads = getters.getUsedThreads(options.boardID)
-    console.log(usedThreads,'xdddd')
-    threads = threads.filter(thread => {
-      console.log(!usedThreads.includes(thread.id))
-      return !usedThreads.includes(thread.id)
-    })
-
-    console.log(threads)
-
-    //cut threads to last 2
-    threads = threads.slice(-2)
-    
-    //add current threads to used
-    commit('ADD_USED_THREADS', {
-      id: options.boardID,
-      threadIDs: threads.map(thread => thread.id)
-    })
-
-    // set timestamp
-    const newTimestamp = threads[0].last_mod
-    commit('SET_BOARDS_TIMESTAMP', {
-      id: options.boardID,
-      timestamp: newTimestamp
-    })
-
-    //get only ids and make it from the oldest
-    const threadIDs = threads.map(thread => thread.id).reverse()
-
-    return threadIDs
+    return threads
   },
 
-  async fetchImagesFromThread({ getters }, options) {
-    const url = getters.getPostsByThreadApiUrl(options.boardID, options.threadID)
-    const postsObject = await this.$axios.$get(url)
-    const images = []
-
-    postsObject.posts.forEach(post => {
-      post.tim
-      ? images.push(`https://i.4cdn.org/${options.boardID}/${post.tim}${post.ext}`)
-      : false
+  async fetchImagesFromThread ({ getters }, options) {
+    const boardID = options.boardID
+    const threadID = options.threadID
+    const timestamp = options.timestamp
+    const url = getters.getPostsByThreadApiUrl(boardID, threadID)
+    const result = await this.$axios.$get(url)
+    console.log(timestamp)
+    //  get posts that have image and newer then timestamp and not video
+    const postsFiltered = result.posts.filter(post => post.time > timestamp && post.tim && post.ext !== 'webm')
+    console.log('tes', postsFiltered)
+    const images = postsFiltered.map(post => {
+      return {
+        url: `https://i.4cdn.org/${boardID}/${post.tim}${post.ext}`,
+        fileName: post.filename,
+        time: post.time
+      }
     })
-    
-    return images.reverse()
+    console.log(images)
+
+    // return from the oldest to the newest
+    return images.sort((a, b) => b.time - a.time)
   }
 }
