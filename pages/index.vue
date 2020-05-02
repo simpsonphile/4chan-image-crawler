@@ -1,36 +1,32 @@
 <template>
   <div class="container">
-    <the-boards-list>
+    <the-boards-list></the-boards-list>
 
-    </the-boards-list>
-
-    {{ boards }}
-
-    <div v-if="boards[36]" style="display: flex; flex-wrap: wrap;">
-      <img
-        v-for="(image, index) in boardImages(36)"
-        :key="'b2-' + index"
-        :src="image"
-        width="200"
-      />
-    </div>
+    <the-board-images></the-board-images>
   </div>
 </template>
 
 <script>
-import { mapGetters } from 'vuex'
+import { mapGetters, mapActions } from 'vuex'
 
 import TheBoardsList from '~/components/TheBoardsList'
+import TheBoardImages from '~/components/TheBoardImages'
 
 export default {
   computed: {
     ...mapGetters({
       boards: 'getBoards',
-      boardImages: 'getBoardImages'
+      getBoardIndex: 'getBoardIndex'
     })
   },
   components: {
-    TheBoardsList
+    TheBoardsList,
+    TheBoardImages
+  },
+  methods: {
+    ...mapActions({
+      fetchImagesFromBoard: 'fetchImagesFromBoard'
+    })
   }
 }
 </script>

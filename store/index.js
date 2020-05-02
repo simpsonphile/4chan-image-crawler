@@ -16,13 +16,18 @@ export const getters = {
   getBoards: state => {
     return state.boards
   },
+  getBoardImages: state => id => {
+    if (!state.boardsIndexMap) return false
+    const index = state.boardsIndexMap.get(id)
+    return state.boards[index].images
+  },
   getBoardImgBufLength: state => id => {
     const index = state.boardsIndexMap.get(id)
-    return state.boards[index].img_buf.length
+    return state.boards[index].imagesBuffered.length
   },
   getThreadTimestamp: state => (boardID, threadID) => {
     const index = state.boardsIndexMap.get(boardID)
-    return state.boards[index].crawled_threads.get(threadID) || 0
+    return state.boards[index].crawledThreads.get(threadID) || 0
   }
 }
 
@@ -35,18 +40,17 @@ export const mutations = {
   },
   UPDATE_IMAGES (state, options) {
     const index = state.boardsIndexMap.get(options.id)
-    state.boards[index].img_buf.push(...options.images)
+    state.boards[index].imagesBuffered.push(...options.images)
   },
-  MOVE_IMAGES_FROM_BUFFOR (state, id) {
+  MOVE_IMAGES_FROM_BUFFOR (state, id) { // TODO: CONNECT WITH UPDATE
     const index = state.boardsIndexMap.get(id)
 
-    state.boards[index].img.push(...state.boards[index].img_buf.slice(0, 30))
-    state.boards[index].img_buf = state.boards[index].img_buf.slice(30)
-    console.log(state.boards[index].img, state.boards[index].img_buf)
+    state.boards[index].images.unshift(...state.boards[index].imagesBuffered.slice(0, 30))
+    state.boards[index].imagesBuffered = state.boards[index].imagesBuffered.slice(30)
   },
   SET_THREAD_TIMESTAMP (state, options) {
     const index = state.boardsIndexMap.get(options.boardID)
-    state.boards[index].crawled_threads.set(options.threadID, options.timestamp)
+    state.boards[index].crawledThreads.set(options.threadID, options.timestamp)
   }
 }
 
@@ -58,9 +62,9 @@ export const actions = {
         return {
           id: board.board,
           name: board.title,
-          img_buf: [],
-          img: [],
-          crawled_threads: new Map()
+          imagesBuffered: [],
+          images: [],
+          crawledThreads: new Map()
         }
       })
 
