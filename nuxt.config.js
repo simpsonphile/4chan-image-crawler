@@ -48,7 +48,8 @@ export default {
   */
   modules: [
     '@nuxtjs/axios',
-    '@nuxtjs/style-resources'
+    '@nuxtjs/style-resources',
+    '@nuxtjs/svg-sprite',
   ],
   axios: {
     baseURL: 'https://cors-anywhere.herokuapp.com/https://a.4cdn.org/'
