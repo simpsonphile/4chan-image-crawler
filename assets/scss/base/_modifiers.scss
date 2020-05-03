@@ -1,0 +1,12 @@
+/* Colors
+========================================================================== */
+@each $pallet, $value in $scotch-colors {
+    @each $name in $value {
+        $i: index($value, $name);
+
+        .u-paint-#{$pallet}-#{$i} {
+            color: #{$name};
+            fill: #{$name};
+        }
+    }
+}
