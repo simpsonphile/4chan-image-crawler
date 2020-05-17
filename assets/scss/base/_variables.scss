@@ -1,9 +1,14 @@
+
+@function tint($color, $percentage) {
+    @return mix(white, $color, $percentage);
+}
+
+@function shade($color, $percentage) {
+    @return mix(black, $color, $percentage);
+}
+
 /* Colors
 ========================================================================== */
-$color_blue_1: #162447;
-$color_blue_2: #1f4068;
-$color_blue_3: #1b1b2f;
-
 $color_red_1: #e43f5a;
 
 $color_light_1: #FFFFFF;
@@ -11,14 +16,50 @@ $color_light_2: #FAFAFA;
 $color_light_3: #EBEBEB;
 $color_light_4: #D2D2D2;
 
+$color_blue: #a8d8ea;
+$color_blue_tint_1: tint($color_blue, 5%);
+$color_blue_tint_2: tint($color_blue, 10%);
+$color_blue_tint_3: tint($color_blue, 15%);
+$color_blue_tint_4: tint($color_blue, 20%);
+$color_blue_tint_5: tint($color_blue, 25%);
+$color_blue_shade_1: shade($color_blue, 5%);
+$color_blue_shade_2: shade($color_blue, 10%);
+$color_blue_shade_3: shade($color_blue, 15%);
+
+
+$color_purple: #aa96da;
+$color_purple_tint_1: tint($color_purple, 5%);
+$color_purple_tint_2: tint($color_purple, 10%);
+$color_purple_tint_3: tint($color_purple, 15%);
+$color_purple_shade_1: shade($color_purple, 5%);
+$color_purple_shade_2: shade($color_purple, 10%);
+$color_purple_shade_3: shade($color_purple, 15%);
+
+$color_pink: #fcbad3;
+$color_pink_tint_1: tint($color_pink, 5%);
+$color_pink_tint_2: tint($color_pink, 10%);
+$color_pink_tint_3: tint($color_pink, 15%);
+$color_pink_shade_1: shade($color_pink, 5%);
+$color_pink_shade_2: shade($color_pink, 10%);
+$color_pink_shade_3: shade($color_pink, 15%);
+
+$color_yellow: #ffffd2;
+$color_yellow_tint_1: tint($color_yellow, 5%);
+$color_yellow_tint_2: tint($color_yellow, 10%);
+$color_yellow_tint_3: tint($color_yellow, 15%);
+$color_yellow_shade_1: shade($color_yellow, 5%);
+$color_yellow_shade_2: shade($color_yellow, 10%);
+$color_yellow_shade_3: shade($color_yellow, 15%);
+
 /* Fonts
 ========================================================================== */
-$font_normal: 'Raleway' arial sans-serif;
-$font_primary: 'Open Sans' arial sans-serif;
+$font_normal: 'Raleway', arial, sans-serif;
+$font_primary: 'Open Sans', arial, sans-serif;
 
 /* Box shadow
 ========================================================================== */
-
+$box-shadow-inset: inset 0px 0px 2px 2px rgba(black, .2);
+$box-shadow: 0px 4px 20px 0px rgba(black, .2);
 
 /* Animations
 ========================================================================== */
@@ -26,5 +67,6 @@ $transition_speed:      200ms;
 
 /* Gaps and sizes
 ========================================================================== */
-
+$gap: 6rem;
+$layout_width: 128rem + $gap * 2;
 

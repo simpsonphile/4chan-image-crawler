@@ -5,8 +5,9 @@ html {
 body {
     min-width: 32rem;
 
+    background-color: $color_blue_tint_5;
+    color: $color_light_1;
+
     font-family: $font_normal;
     font-size: 1.4rem;
-
-    background-color: $color_blue_2;
 }
