@@ -1,83 +1,152 @@
 <template>
-    <div class="c-board-list">
-        <div class="c-board-list__filter-names">
-            <input
+    <div :class="classes">
+        <button
+            @click="isActive = !isActive"
+            class="c-boards-menu__toggle">
+        </button>
+
+
+        <div class="c-boards-menu__search">
+            <control
+                v-if="isActive"
                 type="text"
-                @change="filterNameQuery = $event.target.value" />
+                has-btn
+                @input="filterNameQuery = $event" />
         </div>
-        <ul class="c-board-list__list" v-if="filteredBoards.length">
-            <li
-                class="c-board-list__el"
-                v-for="board in filteredBoards"
-                :key="board.id"
-                @click="fetchImagesFromBoard(board.id)">
-                {{ board.id }}
-            </li>
-        </ul>
+
+        <nav class="c-boards-menu__list-container">
+            <ul
+                class="c-boards-menu__list"
+                v-if="filteredBoards.length && isActive">
+                <li
+                    class="c-boards-menu__el"
+                    v-for="board in filteredBoards"
+                    :key="board.id"
+                    @click="handleElClick(board.id)">
+                    {{ board.menuName }} - {{board.images.length }}
+                </li>
+            </ul>
+        </nav>
     </div>
 </template>
 
 <script>
-import { mapGetters, mapActions } from 'vuex'
+import Control from '~/components/Control'
+import { mapGetters } from 'vuex'
+
+import { mapFields } from 'vuex-map-fields'
 
 export default {
     name: 'the-boards-list',
-    computed: {
-        ...mapGetters({
-            boards: 'getBoards'
-        }),
-        filteredBoards: function () {
-            return this.boards.filter(item => item.id.includes(this.filterNameQuery))
-        }
+    components: {
+        Control
     },
     data: function () {
         return {
-            filterNameQuery: ''
+            filterNameQuery: '',
+            isActive: false
+        }
+    },
+    computed: {
+        ...mapFields({
+            currentBoard: 'currentBoard'
+        }),
+        ...mapGetters({
+            boards: 'getBoards'
+        }),
+        classes: function () {
+            return [
+                'c-boards-menu',
+                this.isActive ? 'is-active' : ''
+            ]
+        },
+        boardsComputed: function () {
+            return this.boards.map(board => {
+                return {
+                    ...board,
+                    menuName: `${board.name} (${board.id})`
+                }
+            })
+        },
+        filteredBoards: function () {
+            return this.boardsComputed.filter(
+                item => item.menuName
+                        .toUpperCase()
+                        .includes(this.filterNameQuery.toUpperCase())
+            )
         }
     },
     methods: {
-        ...mapActions({
-            fetchBoards: 'fetchBoards',
-            fetchImagesFromBoard: 'fetchImagesFromBoard'
-        })
+        handleElClick(id) {
+            this.currentBoard = id
+            this.filterNameQuery = id
+            this.isActive = false
+        }
     },
     mounted () {
-        this.fetchBoards()
+        this.$store.dispatch('fetchBoards')
     }
 }
 </script>
 
 <style lang="scss" scoped>
-    .c-board-list {
+    .c-boards-menu {
         position: fixed;
-        top: 0;
-        bottom: 0;
-        left: 0;
+        top: 2rem;
+        left: 2rem;
+        z-index: 99;
 
-        width: 100px;
+        width: 24rem;
     }
 
-    .c-board-list__list {
-        flex-wrap: wrap;
-        justify-content: center;
-        align-items: center;
-        display: flex;
+    .c-boards-menu__toggle {
+        position: relative;
+        z-index: 2;
+
+        width: 4rem;
+        height: 4rem;
+
+        outline: 0;
+        border: 0;
+        border-radius: 50%;
+        background-color: $color_blue_shade_2;
+        cursor: pointer;
+    }
+
+    .c-boards-menu__search {
+        position: absolute;
+        top: 0;
 
         width: 100%;
+    }
+
+    .c-boards-menu__list-container {
+        overflow-y: scroll;
+
+        height: 30rem;
+
+        border-radius: 1rem;
+    }
+
+    .c-boards-menu__list {
+        width: 100%;
+        margin: 0;
         padding: 0;
 
         list-style-type: none;
     }
 
-    .c-board-list__el {
-        // width: 50%;
-        min-width: 40px;
-        text-align: center;
-        margin: 1px;
+    .c-boards-menu__el {
+        padding: .5rem 1rem;
 
-        background: pink;
-        border: 1px solid blueviolet;
-        color: blueviolet;
         cursor: pointer;
+
+        &:nth-child(even) {
+            background-color: $color_blue_shade_2;
+        }
+
+        &:nth-child(odd) {
+            background-color: $color_blue_shade_1;
+        }
     }
 </style>
