@@ -12,10 +12,6 @@
             @blur="$emit('blur', $event)"
             @focus="$emit('focus', $event)"
             @change="$emit('change', $event)" />
-        <span v-if="hasRightIco"
-            class="f-control__ico">
-            <slot name="rightIco"></slot>
-        </span>
     </div>
 </template>
 
@@ -41,6 +37,9 @@ export default {
         },
         disabled: {
             type: Boolean
+        },
+        hasBtn: {
+            type: Boolean
         }
     },
     computed: {
@@ -55,11 +54,8 @@ export default {
         inputClasses: function () {
             return [
                 'f-control__input',
-                this.hasRightIco ? 'f-control__input--has-right-ico' : '',
+                this.hasBtn ? 'f-control__input--has-btn' : ''
             ]
-        },
-        hasRightIco: function () {
-            return !!this.$slots.rightIco
         }
     },
     methods: {
@@ -79,14 +75,14 @@ export default {
 
     .f-control__input {
         width: 100%;
-        height: 3rem;
+        height: 4rem;
         padding: 0 1.5rem;
 
         border: 0;
-        border-radius: 1.5rem;
+        border-radius: 5rem;
         outline: none;
-        background-color: $color_blue_2;
-        color: $color_light_4;
+        background-color: $color_blue;
+        color: $color_light_1;
 
         font-size: 1.4rem;
         line-height: 2rem;
@@ -100,9 +96,9 @@ export default {
         }
     }
 
-    .f-control__input--has-right-ico {
-        padding-right: 4.5rem;
-    }
+   .f-control__input--has-btn {
+       padding-left: 5.5rem;
+   }
 
     .f-control__ico {
         position: absolute;
