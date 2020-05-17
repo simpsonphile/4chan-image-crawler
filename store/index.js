@@ -1,9 +1,19 @@
+import Vue from 'vue'
+import Vuex from 'vuex'
+
+import { getField, updateField } from 'vuex-map-fields'
+
+Vue.use(Vuex)
+
 export const state = () => ({
   boards: [],
-  boardsIndexMap: undefined
+  boardsIndexMap: undefined,
+  currentBoard: 'mlp'
 })
 
 export const getters = {
+  getField,
+
   getBoardsApiUrl: () => {
     return '/boards.json'
   },
@@ -32,6 +42,8 @@ export const getters = {
 }
 
 export const mutations = {
+  updateField,
+  
   SET_BOARDS_LIST (state, boards) {
     state.boards = boards
   },
